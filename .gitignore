@@ -1,0 +1,77 @@
+# ============================================
+# Glossy Horizons - Unity 6 .gitignore
+# ============================================
+
+# Carpetas generadas por Unity (se regeneran solas)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Carpeta generada por Unity al usar Addressables / Asset Store tools
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Aa]ssets/StreamingAssets/aa.meta
+/[Aa]ssets/StreamingAssets/aa/*
+
+# Archivos de IDE y proyectos generados
+.vs/
+.vscode/
+.idea/
+.gradle/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Archivos de Unity generados automaticamente
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Crashes y reportes
+sysinfo.txt
+crashlytics-build.properties
+
+# Builds
+*.apk
+*.aab
+*.unitypackage
+*.unitypackage.meta
+*.app
+
+# Capturas de memoria y profiler
+*.hprof
+*.mem
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Copias de seguridad y temporales de editores
+*.bak
+*.orig
+*~
+
+# Blender (copias automaticas de guardado)
+*.blend1
+*.blend2

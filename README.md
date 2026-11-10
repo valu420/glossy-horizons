@@ -2,7 +2,7 @@
 
 A 3D sandbox game that takes players through three zones, each dedicated to an aesthetic of the Frutiger family: **Frutiger Aqua**, **Dark Aero** and **Frutiger Evil**. Every zone includes a short minigame and an in-game encyclopedia that explains where the aesthetic comes from and what defines it.
 
-> Student project built by a team of three. First delivery: November 15, 2026. Final release: December 10, 2026.
+> University project for the video game development course 
 
 ## About the Game
 

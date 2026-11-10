@@ -62,6 +62,6 @@ To be defined before the first public release.
 
 ## Team
 
-- **Name 1:** Programming / Gameplay
-- **Name 2:** 3D Art / Character
-- **Name 3:** Levels / UI / Content
+- **Johan Andres Ceballos Tabarez** 
+- **Juan David Pinto Rodriguez** 
+- **Valentina Sánchez Castrillón** 

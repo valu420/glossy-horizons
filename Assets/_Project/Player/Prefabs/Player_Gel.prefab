@@ -9,6 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3757695458748505232}
+  - component: {fileID: 4913639871691777222}
+  - component: {fileID: 7388617881298808692}
+  - component: {fileID: 4689273979058695526}
   m_Layer: 0
   m_Name: Player_Gel
   m_TagString: Untagged
@@ -33,6 +36,70 @@ Transform:
   - {fileID: 8835921001522346797}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!143 &4913639871691777222
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889262916038666546}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.6
+  m_Radius: 0.3
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.8, z: 0}
+--- !u!114 &7388617881298808692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889262916038666546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e274073c9dc007747b57adff13e26f5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ControladorJugador
+  velocidadCaminar: 3
+  velocidadCorrer: 6
+  velocidadGiro: 12
+  alturaSalto: 1.2
+  gravedad: -20
+--- !u!114 &4689273979058695526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889262916038666546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eadf91c8bf321da47bda2168d075f32c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CamaraJugador
+  distancia: 3.5
+  alturaPivote: 1.2
+  radioColision: 0.2
+  inclinacionMinTercera: -30
+  inclinacionMaxTercera: 70
+  cabeza: {fileID: 2805522530050605426}
+  inclinacionMinPrimera: -80
+  inclinacionMaxPrimera: 80
+  sensibilidadMouse: 0.12
+  sensibilidadMando: 150
 --- !u!1001 &1555356358160309178
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -93,6 +160,11 @@ PrefabInstance:
 --- !u!4 &1305768054205398097 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 219caa10f2ff37242955ff9f8dc46c49, type: 3}
+  m_PrefabInstance: {fileID: 1555356358160309178}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2805522530050605426 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3709430889345702600, guid: 219caa10f2ff37242955ff9f8dc46c49, type: 3}
   m_PrefabInstance: {fileID: 1555356358160309178}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &9013328119143750854

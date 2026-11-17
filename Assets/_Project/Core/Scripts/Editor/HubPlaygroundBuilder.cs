@@ -23,9 +23,9 @@ namespace GlossyHorizons.Core.EditorTools
         const float PlazaZ = 70f;
         const float PlazaR = 24f;
 
-        static Material mWhite, mAqua, mGlass, mPath, mOrb, mFrame, mLeaf, mChrome;
-        static Material mPink, mYellow, mBlue, mGreen, mGrass;
-        static Material mBush1, mBush2, mBush3, mFlowerW;
+        internal static Material mWhite, mAqua, mGlass, mPath, mOrb, mFrame, mLeaf, mChrome;
+        internal static Material mPink, mYellow, mBlue, mGreen, mGrass;
+        internal static Material mBush1, mBush2, mBush3, mFlowerW;
 
         [MenuItem("Glossy Horizons/Hub/Crear zona de juegos (norte)")]
         public static void Build()
@@ -51,8 +51,9 @@ namespace GlossyHorizons.Core.EditorTools
             float groundTop = MeasureGrassTop(scene, origin, out terrainInfo, out islandR);
             System.IO.File.WriteAllText("Temp/terrain_info.txt", terrainInfo);
             Debug.Log("[HubPlayground] " + terrainInfo);
-            BuildGround(root.transform, groundTop);
-            BuildSkirt(root.transform, origin, islandR, groundTop);
+            bool hasIsland = HubIslandBuilder.Exists(scene);
+            if (!hasIsland) BuildGround(root.transform, groundTop);
+            if (scene.GetRootGameObjects().All(g => g.name != "Pasto_Hub")) BuildSkirt(root.transform, origin, islandR, groundTop);
 
             var plaza = new GameObject("Plaza").transform;
             plaza.SetParent(root.transform, false);
@@ -73,10 +74,11 @@ namespace GlossyHorizons.Core.EditorTools
             BuildRingPath(root.transform, pathBounds);
             BuildPaths(root.transform, lobby, origin, groundTop, pathPts, pathBounds);
             BuildBushes(root.transform, origin);
-            var pastoExterior = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Pasto_Exterior");
+            var pastoExterior = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Pasto_Exterior" || g.name == "Pasto_Hub");
             ExcludeFromIslandGrass(pastoExterior, pathBounds);
-            BuildGrass(root.transform, pastoExterior, origin, islandR, groundTop, pathPts, pathBounds);
+            if (!hasIsland) BuildGrass(root.transform, pastoExterior, origin, islandR, groundTop, pathPts, pathBounds);
 
+            Debug.Log(HubBushSnap.Snap(scene));
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
@@ -109,7 +111,7 @@ namespace GlossyHorizons.Core.EditorTools
 
         // ---------- Materiales ----------
 
-        static void LoadMaterials()
+        internal static void LoadMaterials()
         {
             if (!AssetDatabase.IsValidFolder(PlayMatsDir))
                 AssetDatabase.CreateFolder("Assets/_Project/Core/Materials", "Juegos");
@@ -157,14 +159,14 @@ namespace GlossyHorizons.Core.EditorTools
             catch { return fallback; }
         }
 
-        static Material Lobby(string name)
+        internal static Material Lobby(string name)
         {
             var m = AssetDatabase.LoadAssetAtPath<Material>($"{LobbyMats}/{name}.mat");
             if (m == null) Debug.LogWarning($"[HubPlayground] Falta {name}; se usará un material por defecto.");
             return m != null ? m : Candy("Juego_Respaldo", Color.white);
         }
 
-        static Material Candy(string name, Color c, float smooth = 0.9f)
+        internal static Material Candy(string name, Color c, float smooth = 0.9f)
         {
             string path = $"{PlayMatsDir}/{name}.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -184,7 +186,7 @@ namespace GlossyHorizons.Core.EditorTools
 
         // ---------- Utilidades ----------
 
-        static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale,
+        internal static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale,
                                Material mat, Vector3? euler = null, bool collider = true)
         {
             var go = GameObject.CreatePrimitive(type);
@@ -198,7 +200,7 @@ namespace GlossyHorizons.Core.EditorTools
             return go;
         }
 
-        static Transform Group(string name, Transform parent, Vector3 localPos)
+        internal static Transform Group(string name, Transform parent, Vector3 localPos)
         {
             var g = new GameObject(name).transform;
             g.SetParent(parent, false);
@@ -206,7 +208,7 @@ namespace GlossyHorizons.Core.EditorTools
             return g;
         }
 
-        static Vector3 Ring(float angleDeg, float radius, float y = 0f)
+        internal static Vector3 Ring(float angleDeg, float radius, float y = 0f)
         {
             float a = angleDeg * Mathf.Deg2Rad;
             return new Vector3(Mathf.Cos(a) * radius, y, Mathf.Sin(a) * radius);
@@ -221,11 +223,15 @@ namespace GlossyHorizons.Core.EditorTools
         }
 
         /// <summary>Altura del borde del terreno de pasto exterior (para que no haya escalón).</summary>
-        static float MeasureGrassTop(UnityEngine.SceneManagement.Scene scene, Vector3 origin, out string info, out float islandRadius)
+        internal static float MeasureGrassTop(UnityEngine.SceneManagement.Scene scene, Vector3 origin, out string info, out float islandRadius)
         {
             islandRadius = 30f;
             float top = -0.02f;
             info = "Pasto_Exterior no encontrado; terreno a y=-0.02";
+            if (HubIslandBuilder.TryTop(scene, out float islaTop)) { info = "Isla"; return islaTop; }
+            var hubGround = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Pasto_Hub");
+            var tc = hubGround != null ? hubGround.transform.Find("Terreno_Centro") : null;
+            if (tc != null) { info = "Pasto unificado (suelo plano)"; return tc.position.y + tc.lossyScale.y * 0.5f; }
             var pe = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "Pasto_Exterior");
             var mf = pe != null ? pe.GetComponentInChildren<MeshFilter>() : null;
             if (mf == null || mf.sharedMesh == null) return top;
@@ -249,7 +255,7 @@ namespace GlossyHorizons.Core.EditorTools
             return minY - 0.01f; // suelo plano del pasto (las colinas suben mas)
         }
 
-        static void BuildPlazaBase(Transform plaza)
+        internal static void BuildPlazaBase(Transform plaza)
         {
             var disc = Prim(PrimitiveType.Cylinder, "Plaza_Piso", plaza, new Vector3(0f, 0f, 0f),
                             new Vector3(PlazaR * 2f, 0.05f, PlazaR * 2f), mWhite, collider: false);
@@ -481,7 +487,7 @@ namespace GlossyHorizons.Core.EditorTools
 
         static GameObject skirtGO;
 
-        static float SampleY(Vector3 world, float fallback, params string[] roots)
+        internal static float SampleY(Vector3 world, float fallback, params string[] roots)
         {
             var hits = Physics.RaycastAll(new Vector3(world.x, 100f, world.z), Vector3.down, 200f, ~0, QueryTriggerInteraction.Ignore);
             float best = float.NegativeInfinity;
@@ -550,7 +556,7 @@ namespace GlossyHorizons.Core.EditorTools
                  new Vector3(-46f, 0f, 34f), new Vector3(-17.5f, 0f, zEnd));
         }
 
-        static void Path(Transform parent, string name, Vector3 origin, float groundTop,
+        internal static void Path(Transform parent, string name, Vector3 origin, float groundTop,
                          List<Vector3> pathPts, List<Bounds> pathBounds, Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3)
         {
             const int N = 64; // más tramos y con solape: sin rendijas en las curvas
@@ -629,7 +635,7 @@ namespace GlossyHorizons.Core.EditorTools
             return m;
         }
 
-        static void AddGrass(GameObject go, MeshFilter ground, GrassField src, float densityScale,
+        internal static void AddGrass(GameObject go, MeshFilter ground, GrassField src, float densityScale,
                              Vector3 domeCenter, float innerRadius, List<Bounds> exclusions)
         {
             var gf = go.AddComponent<GrassField>();

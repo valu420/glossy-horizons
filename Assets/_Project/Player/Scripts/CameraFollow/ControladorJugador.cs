@@ -16,14 +16,15 @@ public class ControladorJugador : MonoBehaviour
     public float velocidadGiro = 12f;
 
     [Header("Salto")]
-    public float alturaSalto = 1.2f;
-    public float gravedad = -20f;
+    public float alturaSalto = 1.4f;
+    public float gravedad = -11f;   // baja = salto más flotante
 
     // Datos que pueden leer otros scripts (por ejemplo, las animaciones de HU-05)
     public Vector3 VelocidadHorizontal { get; private set; }
     public bool EnSuelo => cc != null && cc.isGrounded;
     public bool Corriendo { get; private set; }
     public bool SaltoEsteFrame { get; private set; }
+    public float VelocidadVertical => velocidadVertical;   // > 0 subiendo, < 0 cayendo
 
     CharacterController cc;
     CamaraJugador camara;

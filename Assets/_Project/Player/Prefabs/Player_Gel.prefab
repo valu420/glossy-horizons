@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3757695458748505232}
   - component: {fileID: 4913639871691777222}
   - component: {fileID: 7388617881298808692}
+  - component: {fileID: 5551979710585021924}
   - component: {fileID: 4689273979058695526}
   m_Layer: 0
   m_Name: Player_Gel
@@ -76,8 +77,44 @@ MonoBehaviour:
   velocidadCaminar: 3
   velocidadCorrer: 6
   velocidadGiro: 12
-  alturaSalto: 1.2
-  gravedad: -20
+  alturaSalto: 1.4
+  gravedad: -11
+--- !u!114 &5551979710585021924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889262916038666546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0304c32b5dc564c4a9745877678c3350, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimacionGel
+  flotacion: 0.02
+  ciclosReposo: 0.7
+  ciclosPorMetro: 0.55
+  pasoCaminar: 0.12
+  alturaPasoCaminar: 0.07
+  braceoCaminar: 0.18
+  inclinacionCaminar: 5
+  pasoCorrer: 0.15
+  alturaPasoCorrer: 0.09
+  manosAtras: 0.3
+  aleteoManos: 0.035
+  inclinacionCorrer: 18
+  manosArribaAlSaltar: 0.6
+  aplastamientoAlCaer: 0.22
+  parpadeoMin: 2
+  parpadeoMax: 5
+  segundosParaAdormecerse: 15
+  segundosParaDormir: 18
+  texturaNube: {fileID: 2800000, guid: 12a79eed83714964b69b4874c66f1b18, type: 3}
+  texturaLetraZ: {fileID: 2800000, guid: 8b2a8674a035473d8a647aa6b3b03c17, type: 3}
+  texturaExclamacion: {fileID: 2800000, guid: c864528870d5471087bd6cf55dc302e0, type: 3}
+  cicloZzz: 3
+  tamanoBurbuja: 0.45
+  posicionBurbuja: {x: 0.28, y: 0.42, z: 0}
 --- !u!114 &4689273979058695526
 MonoBehaviour:
   m_ObjectHideFlags: 0

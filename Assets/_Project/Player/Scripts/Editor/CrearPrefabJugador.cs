@@ -3,7 +3,7 @@
 //   > Crear prefab del jugador          -> Player/Prefabs/Player_Gel.prefab
 //   > Crear escena de prueba del jugador -> Player/Pruebas/Test_Jugador.unity
 // Estructura del prefab:
-//   Player_Gel            (raíz: CharacterController + ControladorJugador + CamaraJugador)
+//   Player_Gel            (raíz: CharacterController + ControladorJugador + AnimacionGel + CamaraJugador)
 //   ├── Personaje_Gel     (modelo de gel con sus ojos)
 //   └── Anillo_Luz        (aro cian en el suelo)
 using System.IO;
@@ -16,6 +16,9 @@ public static class CrearPrefabJugador
     const string RutaModelo = "Assets/_Project/Player/Models/Personaje_Gel.fbx";
     const string RutaAnillo = "Assets/_Project/Player/Models/Anillo_Luz.fbx";
     const string RutaPrefab = "Assets/_Project/Player/Prefabs/Player_Gel.prefab";
+    const string RutaTexturaNube = "Assets/_Project/Player/Textures/T_BurbujaNube.png";
+    const string RutaTexturaLetraZ = "Assets/_Project/Player/Textures/T_LetraZ.png";
+    const string RutaTexturaExclamacion = "Assets/_Project/Player/Textures/T_BurbujaExclamacion.png";
     const string CarpetaPruebas = "Assets/_Project/Player/Pruebas";
     const string RutaEscenaPrueba = CarpetaPruebas + "/Test_Jugador.unity";
 
@@ -56,6 +59,10 @@ public static class CrearPrefabJugador
             cc.center = new Vector3(0f, 0.8f, 0f);
             cc.stepOffset = 0.3f;
             raiz.AddComponent<ControladorJugador>();
+            var anim = raiz.AddComponent<AnimacionGel>();   // HU-05
+            anim.texturaNube = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaNube);
+            anim.texturaLetraZ = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaLetraZ);
+            anim.texturaExclamacion = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaExclamacion);
             var camara = raiz.AddComponent<CamaraJugador>();
             foreach (Transform t in personaje.GetComponentsInChildren<Transform>(true))
                 if (t.name == "Cabeza") { camara.cabeza = t; break; }
@@ -83,7 +90,8 @@ public static class CrearPrefabJugador
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaPrefab);
-        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null)
+        var animPrefab = prefab != null ? prefab.GetComponent<AnimacionGel>() : null;
+        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null || animPrefab == null || animPrefab.texturaNube == null || animPrefab.texturaLetraZ == null)
             prefab = CrearPrefab();   // crea o actualiza el prefab con los scripts de HU-04
         if (prefab == null) return;
 

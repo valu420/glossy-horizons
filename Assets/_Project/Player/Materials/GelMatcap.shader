@@ -6,6 +6,9 @@
 //   Matcap B = brillo del borde inferior (luz que atraviesa el gel)
 // Para cambiar el color desde un script (HU-02):
 //   material.SetColor("_ColorBase", ...);  material.SetColor("_ColorClaro", ...);
+// Enojo (HU-06, emote Enojado): degradado rojo desde la mitad hasta la parte de arriba de la pieza.
+//   Se activa por pieza con un MaterialPropertyBlock: _Enojo (0..1) y la altura en el mundo
+//   donde empieza (_EnojoDesde) y donde es más fuerte (_EnojoHasta).
 Shader "Glossy/GelMatcap"
 {
     Properties
@@ -17,6 +20,11 @@ Shader "Glossy/GelMatcap"
         _Borde ("Brillo del borde inferior", Range(0, 1)) = 0.6
         _ColorContorno ("Color del contorno", Color) = (0.04, 0.1, 0.25, 1)
         _GrosorContorno ("Grosor del contorno (0 = sin contorno)", Range(0, 0.03)) = 0.008
+        [Header(Enojo controlado por AnimacionGel)]
+        _Enojo ("Enojo", Range(0, 1)) = 0
+        _ColorEnojo ("Color del enojo", Color) = (1, 0.12, 0.15, 1)
+        _EnojoDesde ("Enojo: altura donde empieza", Float) = 0
+        _EnojoHasta ("Enojo: altura donde es mas fuerte", Float) = 1
     }
 
     SubShader
@@ -46,6 +54,10 @@ Shader "Glossy/GelMatcap"
                 half _Borde;
                 half4 _ColorContorno;
                 half _GrosorContorno;
+                half _Enojo;
+                half4 _ColorEnojo;
+                float _EnojoDesde;
+                float _EnojoHasta;
             CBUFFER_END
 
             struct Attributes
@@ -59,6 +71,7 @@ Shader "Glossy/GelMatcap"
                 float4 positionCS : SV_POSITION;
                 float3 normalVS   : TEXCOORD0;
                 float  fogFactor  : TEXCOORD1;
+                float  alturaWS   : TEXCOORD2;
             };
 
             Varyings vert (Attributes v)
@@ -69,6 +82,7 @@ Shader "Glossy/GelMatcap"
                 float3 normalWS = TransformObjectToWorldNormal(v.normalOS);
                 o.normalVS = TransformWorldToViewDir(normalWS);
                 o.fogFactor = ComputeFogFactor(pos.positionCS.z);
+                o.alturaWS = pos.positionWS.y;
                 return o;
             }
 
@@ -80,6 +94,10 @@ Shader "Glossy/GelMatcap"
 
                 half3 col = lerp(_ColorBase.rgb, _ColorClaro.rgb, m.r);   // borde azul -> centro claro
                 col += _ColorClaro.rgb * m.b * _Borde;                    // luz que atraviesa abajo
+                // Enojo: el gel se pone rojo de la mitad hacia arriba (conserva su volumen y sus reflejos)
+                half enojo = _Enojo * smoothstep(_EnojoDesde, _EnojoHasta, i.alturaWS);
+                half3 rojo = _ColorEnojo.rgb * lerp(0.55, 1.15, m.r);
+                col = lerp(col, rojo, saturate(enojo));
                 col = lerp(col, half3(1, 1, 1), saturate(m.g * _Brillo)); // reflejos blancos
                 col = MixFog(col, i.fogFactor);
                 return half4(col, 1);
@@ -108,6 +126,10 @@ Shader "Glossy/GelMatcap"
                 half _Borde;
                 half4 _ColorContorno;
                 half _GrosorContorno;
+                half _Enojo;
+                half4 _ColorEnojo;
+                float _EnojoDesde;
+                float _EnojoHasta;
             CBUFFER_END
 
             struct AttributesContorno

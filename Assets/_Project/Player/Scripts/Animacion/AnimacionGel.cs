@@ -12,6 +12,7 @@
 //   Dormir   -> tras unos segundos quieto se duerme: ojos cerrados, cabeza ladeada
 //               y una nube "Zzz" sobre la cabeza
 //   Despertar-> ojos grandes, saltito y una burbuja "!"
+//   Emotes   -> 9 emotes (HU-06), en AnimacionGel.Emotes.cs
 //
 // Cada pieza sigue su posición con un pequeño retraso (como un resorte):
 // eso le da el efecto de gelatina.
@@ -19,7 +20,7 @@ using UnityEngine;
 
 [DefaultExecutionOrder(100)]   // después del movimiento y antes de la cámara
 [RequireComponent(typeof(ControladorJugador))]
-public class AnimacionGel : MonoBehaviour
+public partial class AnimacionGel : MonoBehaviour
 {
     [Header("Reposo")]
     public float flotacion = 0.02f;
@@ -165,6 +166,7 @@ public class AnimacionGel : MonoBehaviour
                 burbujaZzz.letras[i] = sr;
             }
         }
+        CrearSpritesEmotes();
     }
 
     Pieza Crear(string nombre, float retraso)
@@ -286,8 +288,13 @@ public class AnimacionGel : MonoBehaviour
         if (enSuelo) tiempoEnAire = 0f;
         estabaEnSuelo = enSuelo;
 
+        // ---------- Emotes (HU-06) ----------
+        ActualizarEmote(dt, velocidad, enSuelo, saltoAhora);
+        ActualizarCharco(dt, velocidad);
+        float pe = pesoEmote;
+
         // ---------- Dormir y despertar ----------
-        bool activo = velocidad > 0.05f || !enSuelo || saltoAhora || mirandoCamara;
+        bool activo = velocidad > 0.05f || !enSuelo || saltoAhora || mirandoCamara || EnEmote || EnCharco;
         if (activo)
         {
             if (Durmiendo) Despertar();
@@ -320,6 +327,7 @@ public class AnimacionGel : MonoBehaviour
             if (u >= 1f && !aterrizoAlegria) { Rebotar(aplastamientoAlCaer * 0.8f); aterrizoAlegria = true; }
         }
         pesoAlegria = Suavizar(pesoAlegria, alegria < duracionAlegria * 0.8f ? 1f : 0f, 14f, dt);
+        elevacion += pose.elevar * pe;
 
         // ---------- Valores de la animación ----------
         tiempo += dt * Mathf.Lerp(ciclosReposo, 0.35f, sueno);
@@ -341,11 +349,16 @@ public class AnimacionGel : MonoBehaviour
         float respira = 1f + 0.015f * Mathf.Sin(tiempo * 2f * Mathf.PI) * reposo;
         float estiraAire = 0.05f * pesoSubida;
         Vector3 aplastar = new Vector3(1f + s * 0.6f - estiraAire * 0.5f, (1f - s + estiraAire) * respira, 1f + s * 0.6f - estiraAire * 0.5f);
+        aplastar = Vector3.Scale(aplastar, Vector3.Lerp(Vector3.one, pose.escala, pe));
+        aplastar = Vector3.Scale(aplastar, AplastarCharco());                               // emote Gelatina (se derrite)
+        // Mareado: vueltas del cuerpo entero (con Slerp, para que al terminar no "desgire")
+        giroTodo = Quaternion.Slerp(Quaternion.identity, Quaternion.AngleAxis(pose.giro, Vector3.up), pe);
         if (modelo != null) modelo.localScale = Vector3.Scale(escalaModelo, aplastar);
 
         // ---------- Cuerpo ----------
         Quaternion inclina = Quaternion.AngleAxis(inclinacion, Vector3.right) * Quaternion.AngleAxis(balanceo, Vector3.forward);
-        Mover(cuerpo, new Vector3(0f, flota + rebotePaso, 0f), inclina, aplastar, dt);
+        Mover(cuerpo, Vector3.Lerp(new Vector3(0f, flota + rebotePaso, 0f), pose.cuerpo, pe),
+              Quaternion.Slerp(inclina, pose.giroCuerpo, pe), aplastar, dt);
 
         // ---------- Cabeza ----------
         float alturaCabeza = cabeza != null && cuerpo != null ? cabeza.basePos.y - cuerpo.basePos.y : 0.5f;
@@ -353,7 +366,7 @@ public class AnimacionGel : MonoBehaviour
                                         Mathf.Sin(inclinacion * Mathf.Deg2Rad) * alturaCabeza);
         Quaternion giroCabeza = Quaternion.AngleAxis(inclinacion * 0.5f, Vector3.right)
                               * Quaternion.AngleAxis(balanceo * 0.6f + 12f * sueno, Vector3.forward);
-        Mover(cabeza, offCabeza, giroCabeza, aplastar, dt);
+        Mover(cabeza, Vector3.Lerp(offCabeza, pose.cabeza, pe), Quaternion.Slerp(giroCabeza, pose.giroCabeza, pe), aplastar, dt);
 
         // ---------- Manos ----------
         // Además de moverse, cada mano GIRA para apuntar hacia donde corresponde:
@@ -402,6 +415,16 @@ public class AnimacionGel : MonoBehaviour
             // Dormida: las manitos se inclinan hacia adentro y se tocan de las puntas
             Quaternion gDormir = Quaternion.FromToRotation(eje, new Vector3(-m.lado * 0.45f, -1f, 0.2f).normalized);
             objetivo = Quaternion.Slerp(objetivo, gDormir, sueno);
+            // Emote: la mano va a la posición y dirección de la pose
+            if (pe > 0.001f)
+            {
+                bool derecha = m == manoD;
+                Vector3 posEmote = (derecha ? pose.manoPosD : pose.manoPosI) - m.basePos;
+                Vector3 dirEmote = derecha ? pose.manoDirD : pose.manoDirI;
+                off = Vector3.Lerp(off, posEmote, pe);
+                if (dirEmote.sqrMagnitude > 0.0001f)
+                    objetivo = Quaternion.Slerp(objetivo, Quaternion.FromToRotation(eje, dirEmote.normalized), pe);
+            }
             m.giroActual = Quaternion.Slerp(m.giroActual, objetivo, 1f - Mathf.Exp(-12f * dt));
 
             Mover(m, off, m.giroActual, aplastar, dt);
@@ -415,6 +438,7 @@ public class AnimacionGel : MonoBehaviour
             Vector3 off = new Vector3(0f, Mathf.Max(0f, Mathf.Cos(f)) * alturaPaso, Mathf.Sin(f) * paso)
                         + new Vector3(0f, 0.06f, 0f) * pesoSubida                       // al subir los recoge
                         + new Vector3(p.lado * 0.05f, -0.07f, 0f) * pesoCaida;          // al caer cuelgan
+            off = Vector3.Lerp(off, p == pieD ? pose.pieD : pose.pieI, pe);         // emote (bailar, patalear)
             Mover(p, off, Quaternion.identity, aplastar, dt);
         }
 
@@ -498,11 +522,14 @@ public class AnimacionGel : MonoBehaviour
             if (parpadeo <= 0f && parpadeoDoble) { parpadeoDoble = false; parpadeo = 0.18f; }
         }
         float abrir = parpadeo > 0f ? Mathf.Max(0.08f, Mathf.Abs((parpadeo - 0.09f) / 0.09f)) : 1f;
+        abrirCharco = abrir;                                          // los ojos del charco también parpadean
         if (cierreAterrizaje > 0f) { cierreAterrizaje -= dt; abrir = Mathf.Min(abrir, 0.15f); }
 
         abrir *= Mathf.Lerp(1f, 0.75f, pesoCorrer * pesoMov);   // entrecierra al correr
         abrir *= Mathf.Lerp(1f, 0.12f, sueno);                   // dormido: rayitas
         float grandes = 1f + 0.3f * sorpresa + 0.15f * pesoCaida; // sorpresa o caída: ojos grandes
+        abrir *= Mathf.Lerp(1f, pose.abrirOjos, pesoEmote);           // emotes: ojos cerrados, entrecerrados...
+        grandes *= Mathf.Lerp(1f, pose.ojosGrandes, pesoEmote);
 
         // Mirar a los lados de vez en cuando (solo en reposo y despierto)
         siguienteMirada -= dt;
@@ -515,16 +542,17 @@ public class AnimacionGel : MonoBehaviour
         mirada = Suavizar(mirada, objetivoMirada, 8f, dt);
 
         bool primeraPersona = camara != null && camara.PrimeraPersona;
-        bool feliz = pesoAlegria > 0.5f && !primeraPersona;
+        float espiral = AnimarOjosEspiral(dt, primeraPersona);      // Mareado: el ojo se deforma en espiral
+        bool feliz = (pesoAlegria > 0.5f || (pose.ojosFelices && pesoEmote > 0.5f)) && !primeraPersona && espiral <= 0f;
         foreach (var f in ojosFelices)
             if (f.gameObject.activeSelf != feliz) f.gameObject.SetActive(feliz);
 
         foreach (var o in ojos)
         {
             var rOjo = o.t.GetComponent<Renderer>();
-            if (rOjo != null && !primeraPersona) rOjo.enabled = !feliz;
-            Vector3 e = o.escala * grandes;
-            e[o.ejeVertical] = o.escala[o.ejeVertical] * abrir * grandes;
+            if (rOjo != null && !primeraPersona) rOjo.enabled = !feliz && espiral < 0.6f && !ModeloOculto;
+            Vector3 e = o.escala * grandes * (1f - espiral);                       // se encoge mientras sale la espiral
+            e[o.ejeVertical] = o.escala[o.ejeVertical] * abrir * grandes * (1f - espiral);
             o.t.localScale = e;
             Vector3 desplazamiento = transform.TransformVector(new Vector3(mirada * 0.012f, -0.006f * sueno, 0f));
             o.t.localPosition = o.posLocal + (o.t.parent != null ? o.t.parent.InverseTransformVector(desplazamiento) : desplazamiento);
@@ -580,13 +608,15 @@ public class AnimacionGel : MonoBehaviour
         }
     }
 
+    Quaternion giroTodo = Quaternion.identity;   // gira el personaje entero sobre sí mismo (emote Mareado)
+
     void Mover(Pieza p, Vector3 offset, Quaternion giro, Vector3 aplastar, float dt)
     {
         if (p == null) return;
         p.actual = Vector3.SmoothDamp(p.actual, offset, ref p.vel, p.retraso, Mathf.Infinity, dt);
-        Vector3 local = Vector3.Scale(p.basePos + p.actual, aplastar);
+        Vector3 local = giroTodo * Vector3.Scale(p.basePos + p.actual, aplastar);
         p.t.position = transform.TransformPoint(local + Vector3.up * elevacion);
-        p.t.rotation = transform.rotation * giro * p.baseRot;
+        p.t.rotation = transform.rotation * giroTodo * giro * p.baseRot;
     }
 
     void Rebotar(float cantidad)

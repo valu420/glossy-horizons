@@ -19,6 +19,8 @@ public class BotonOrbeVista : MonoBehaviour,
     public Image brillo;
     [Tooltip("Opcional: si está asignado, el orbe queda encendido mientras el panel está abierto")]
     public PanelColoresHUD panel;
+    [Tooltip("Opcional: cualquier ventana; el orbe queda encendido mientras esté abierta (por ejemplo, Emotes)")]
+    public GameObject ventana;
     [Tooltip("Opcional: capa del personaje; crece al pasar el mouse o con el panel abierto")]
     public RectTransform personaje;
 
@@ -46,7 +48,7 @@ public class BotonOrbeVista : MonoBehaviour,
     void Update()
     {
         float dt = Time.unscaledDeltaTime;   // sigue animando aunque el juego esté en pausa
-        bool abierto = panel != null && panel.Abierto;
+        bool abierto = (panel != null && panel.Abierto) || (ventana != null && ventana.activeInHierarchy);
 
         float respiro = brilloReposo * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 2f));
         float objetivo = (encima || abierto) ? 1f : respiro;

@@ -15,6 +15,11 @@ public class ControladorJugador : MonoBehaviour
     public float velocidadCorrer = 6f;
     public float velocidadGiro = 12f;
 
+    [Header("Modo charco (emote Gelatina, HU-06)")]
+    [Tooltip("Velocidad al moverse derretido: más lento, sin correr ni saltar")]
+    public float velocidadCharco = 1.5f;
+    public bool ModoCharco { get; set; }
+
     [Header("Salto")]
     public float alturaSalto = 1.4f;
     public float gravedad = -11f;   // baja = salto más flotante
@@ -72,15 +77,16 @@ public class ControladorJugador : MonoBehaviour
         if (direccion.sqrMagnitude > 1f) direccion.Normalize();
 
         bool moviendose = direccion.sqrMagnitude > 0.01f;
-        Corriendo = moviendose && correr.IsPressed();
-        Vector3 horizontal = direccion * (Corriendo ? velocidadCorrer : velocidadCaminar);
+        Corriendo = moviendose && correr.IsPressed() && !ModoCharco;
+        float rapidez = ModoCharco ? velocidadCharco : (Corriendo ? velocidadCorrer : velocidadCaminar);
+        Vector3 horizontal = direccion * rapidez;
 
         // Salto y gravedad
         SaltoEsteFrame = false;
         if (cc.isGrounded)
         {
             if (velocidadVertical < 0f) velocidadVertical = -2f;   // lo mantiene pegado al suelo
-            if (saltar.WasPressedThisFrame())
+            if (saltar.WasPressedThisFrame() && !ModoCharco)   // derretido no puede saltar
             {
                 velocidadVertical = Mathf.Sqrt(alturaSalto * -2f * gravedad);
                 SaltoEsteFrame = true;

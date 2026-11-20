@@ -79,6 +79,7 @@ MonoBehaviour:
   velocidadCaminar: 3
   velocidadCorrer: 6
   velocidadGiro: 12
+  velocidadCharco: 1.5
   alturaSalto: 1.4
   gravedad: -11
 --- !u!114 &5551979710585021924
@@ -93,6 +94,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0304c32b5dc564c4a9745877678c3350, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimacionGel
+  radioCharco: 0.5
+  altoCharco: 0.26
+  texturaBurbuja: {fileID: 2800000, guid: c46ff447578164245bba652d6913352b, type: 3}
+  texturaNota: {fileID: 2800000, guid: 09d8f93edcd5e23469e36f5f70280f48, type: 3}
+  texturaCorazon: {fileID: 2800000, guid: f5e7fc70f89c11a48af4f0dabeae9207, type: 3}
+  texturaVapor: {fileID: 2800000, guid: a869e1d1b7814d940885041ec0c30e9f, type: 3}
+  texturaPregunta: {fileID: 2800000, guid: 88481ae2ca033c24bb21d44a7e6cdbfc, type: 3}
+  texturaOndas: {fileID: 2800000, guid: 0662bb2c7b5df3642bb74858e5052065, type: 3}
+  tamanoParticula: 0.2
+  materialEstela: {fileID: 2100000, guid: 2e47890adaa07644d8607a788338bcab, type: 2}
+  radioEstela: 0.5
+  vueltasEstela: 2.2
+  anchoEstela: 0.26
+  largoTira: 2.1
   flotacion: 0.02
   ciclosReposo: 0.7
   ciclosPorMetro: 0.55
@@ -165,6 +180,11 @@ MonoBehaviour:
   inclinacionMinPrimera: -80
   inclinacionMaxPrimera: 80
   girarConClicDerecho: 1
+  distanciaVitrina: 3
+  alturaVitrina: 0.8
+  inclinacionVitrina: 6
+  corrimientoVitrina: 0.6
+  rapidezVitrina: 5
   sensibilidadMouse: 0.12
   sensibilidadMando: 150
 --- !u!1001 &1555356358160309178

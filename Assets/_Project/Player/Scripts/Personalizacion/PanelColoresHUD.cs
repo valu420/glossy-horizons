@@ -46,6 +46,8 @@ public class PanelColoresHUD : MonoBehaviour
             if (avisoEnElAire != null) avisoEnElAire.Mostrar();
             return;
         }
+        var emotes = FindAnyObjectByType<PanelEmotesHUD>();
+        if (emotes != null && emotes.Abierto) emotes.Cerrar();      // una ventana a la vez
         panel.SetActive(true);
         PausarJugador(jugador, true);
     }

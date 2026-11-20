@@ -19,8 +19,78 @@ public static class CrearPrefabJugador
     const string RutaTexturaNube = "Assets/_Project/Player/Textures/T_BurbujaNube.png";
     const string RutaTexturaLetraZ = "Assets/_Project/Player/Textures/T_LetraZ.png";
     const string RutaTexturaExclamacion = "Assets/_Project/Player/Textures/T_BurbujaExclamacion.png";
+    const string CarpetaTexturas = "Assets/_Project/Player/Textures/";   // partículas de los emotes (HU-06)
+    const string RutaMaterialEstela = "Assets/_Project/Player/Materials/M_EstelaMusical.mat";
+
+    // Material de la estela musical (emote Bailar): shader Glossy/EstelaMusical + tira T_EstelaMusical.
+    // La tira se repite a lo largo de la cinta, así que su textura debe usar "Repeat".
+    static Material MaterialEstela()
+    {
+        string rutaTira = CarpetaTexturas + "T_EstelaMusical.png";
+        var imp = AssetImporter.GetAtPath(rutaTira) as TextureImporter;
+        if (imp != null && (imp.wrapMode != TextureWrapMode.Repeat || !imp.alphaIsTransparency))
+        {
+            imp.wrapMode = TextureWrapMode.Repeat;
+            imp.alphaIsTransparency = true;
+            imp.SaveAndReimport();
+        }
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(RutaMaterialEstela);
+        if (mat == null)
+        {
+            var shader = Shader.Find("Glossy/EstelaMusical");
+            if (shader == null) { Debug.LogWarning("No se encontró el shader Glossy/EstelaMusical."); return null; }
+            mat = new Material(shader);
+            AssetDatabase.CreateAsset(mat, RutaMaterialEstela);
+        }
+        mat.mainTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(rutaTira);
+        EditorUtility.SetDirty(mat);
+        AssetDatabase.SaveAssets();
+        return mat;
+    }
     const string CarpetaPruebas = "Assets/_Project/Player/Pruebas";
     const string RutaEscenaPrueba = CarpetaPruebas + "/Test_Jugador.unity";
+
+    // Después de compilar, si al prefab le faltan recursos nuevos (texturas de los emotes, material de
+    // la estela), se los pone solo, sin rehacerlo. Así no hace falta acordarse de regenerarlo.
+    [InitializeOnLoadMethod]
+    static void CompletarAlCompilar()
+    {
+        EditorApplication.delayCall += () =>
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaPrefab);
+            var anim = prefab != null ? prefab.GetComponent<AnimacionGel>() : null;
+            if (anim == null || !FaltanRecursos(anim)) return;
+            var raiz = PrefabUtility.LoadPrefabContents(RutaPrefab);
+            try
+            {
+                PonerRecursos(raiz.GetComponent<AnimacionGel>());
+                PrefabUtility.SaveAsPrefabAsset(raiz, RutaPrefab);
+                Debug.Log("Player_Gel: se agregaron los recursos que le faltaban (texturas de emotes y estela musical).");
+            }
+            finally { PrefabUtility.UnloadPrefabContents(raiz); }
+        };
+    }
+
+    static bool FaltanRecursos(AnimacionGel a) =>
+        a.texturaNube == null || a.texturaLetraZ == null || a.texturaExclamacion == null || a.texturaNota == null ||
+        a.materialEstela == null || a.texturaCorazon == null || a.texturaPregunta == null ||
+        a.texturaVapor == null || a.texturaBurbuja == null || a.texturaOndas == null;
+
+    static void PonerRecursos(AnimacionGel anim)
+    {
+        if (anim == null) return;
+        anim.texturaNube = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaNube);
+        anim.texturaLetraZ = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaLetraZ);
+        anim.texturaExclamacion = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaExclamacion);
+        anim.texturaNota = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmoteNota.png");      // HU-06
+        anim.materialEstela = MaterialEstela();                                                            // estela del baile
+        anim.texturaCorazon = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmoteCorazon.png");
+        anim.texturaPregunta = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmotePregunta.png");
+        anim.texturaVapor = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmoteVapor.png");
+        anim.texturaBurbuja = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmoteBurbuja.png");
+        anim.texturaOndas = AssetDatabase.LoadAssetAtPath<Texture2D>(CarpetaTexturas + "T_EmoteOndas.png");
+    }
 
     [MenuItem("Glossy Horizons/Crear prefab del jugador")]
     static void Crear()
@@ -75,9 +145,7 @@ public static class CrearPrefabJugador
             cc.stepOffset = 0.3f;
             raiz.AddComponent<ControladorJugador>();
             var anim = raiz.AddComponent<AnimacionGel>();   // HU-05
-            anim.texturaNube = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaNube);
-            anim.texturaLetraZ = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaLetraZ);
-            anim.texturaExclamacion = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaExclamacion);
+            PonerRecursos(anim);                              // texturas de burbujas y emotes, material de la estela
             raiz.AddComponent<ColorPersonaje>();   // HU-02: usa el color elegido
             // HUD con el botón orbe y el panel de colores: se crea solo en cualquier escena
             var hud = AssetDatabase.LoadAssetAtPath<GameObject>(CrearHUDJugador.RutaPrefab);
@@ -111,7 +179,7 @@ public static class CrearPrefabJugador
 
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaPrefab);
         var animPrefab = prefab != null ? prefab.GetComponent<AnimacionGel>() : null;
-        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null || prefab.GetComponent<ColorPersonaje>() == null || prefab.GetComponent<CargarHUD>() == null || animPrefab == null || animPrefab.texturaNube == null || animPrefab.texturaLetraZ == null)
+        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null || prefab.GetComponent<ColorPersonaje>() == null || prefab.GetComponent<CargarHUD>() == null || animPrefab == null || animPrefab.texturaNube == null || animPrefab.texturaLetraZ == null || animPrefab.texturaNota == null || animPrefab.texturaPregunta == null || animPrefab.texturaBurbuja == null || animPrefab.materialEstela == null)
             prefab = CrearPrefab();   // crea o actualiza el prefab con los scripts de HU-04
         if (prefab == null) return;
 

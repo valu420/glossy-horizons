@@ -50,6 +50,10 @@ public class AnimacionGel : MonoBehaviour
     public float segundosParaAdormecerse = 15f;
     public float segundosParaDormir = 18f;
 
+    [Header("Personalización (HU-02)")]
+    public float duracionAlegria = 0.9f;          // salto de alegría al elegir un color
+    public float alturaSaltoAlegria = 0.22f;
+
     [Header("Burbujas sobre la cabeza")]
     public Texture2D texturaNube;                // nube vacía
     public Texture2D texturaLetraZ;              // una "Z": se anima Z -> Zz -> Zzz
@@ -106,6 +110,12 @@ public class AnimacionGel : MonoBehaviour
     float cierreAterrizaje, mirada, objetivoMirada, siguienteMirada = 4f;
     float quieto, sueno, sorpresa, tiempoExcl = 10f;
 
+    // Personalización: voltear a la cámara y saltar de alegría con ojos "><"
+    bool mirandoCamara;
+    float alegria = 10f, pesoAlegria, elevacion;
+    bool aterrizoAlegria = true;
+    Transform[] ojosFelices = new Transform[0];
+
     void Awake()
     {
         ctrl = GetComponent<ControladorJugador>();
@@ -135,6 +145,7 @@ public class AnimacionGel : MonoBehaviour
             lista.Add(o);
         }
         ojos = lista.ToArray();
+        CrearOjosFelices();
 
         burbujaZzz = CrearBurbuja("Burbuja_Zzz", texturaNube);
         burbujaExcl = CrearBurbuja("Burbuja_Exclamacion", texturaExclamacion);
@@ -252,18 +263,20 @@ public class AnimacionGel : MonoBehaviour
         if (dt <= 0f) return;
 
         // ---------- Leer el movimiento ----------
-        float velocidad = ctrl.VelocidadHorizontal.magnitude;
-        bool enSuelo = ctrl.EnSuelo;
+        bool controlActivo = ctrl.enabled;
+        float velocidad = controlActivo ? ctrl.VelocidadHorizontal.magnitude : 0f;
+        bool enSuelo = !controlActivo || ctrl.EnSuelo;
+        bool saltoAhora = controlActivo && ctrl.SaltoEsteFrame;
         bool enAire = !enSuelo && tiempoEnAire > 0.05f;
         pesoMov = Suavizar(pesoMov, velocidad > 0.1f ? 1f : 0f, 8f, dt);
-        pesoCorrer = Suavizar(pesoCorrer, ctrl.Corriendo ? 1f : 0f, 6f, dt);
+        pesoCorrer = Suavizar(pesoCorrer, controlActivo && ctrl.Corriendo ? 1f : 0f, 6f, dt);
         pesoAire = Suavizar(pesoAire, enAire ? 1f : 0f, 10f, dt);
         pesoSubida = Suavizar(pesoSubida, enAire && ctrl.VelocidadVertical > 0f ? 1f : 0f, 10f, dt);
         pesoCaida = Suavizar(pesoCaida, enAire && ctrl.VelocidadVertical <= 0f ? 1f : 0f, 8f, dt);
         fase += velocidad * ciclosPorMetro * 2f * Mathf.PI * dt;
 
         // ---------- Salto y aterrizaje ----------
-        if (ctrl.SaltoEsteFrame) Rebotar(-0.12f);                       // se estira al despegar
+        if (saltoAhora) Rebotar(-0.12f);                       // se estira al despegar
         if (!enSuelo) tiempoEnAire += dt;
         if (enSuelo && !estabaEnSuelo && tiempoEnAire > 0.15f)
         {
@@ -274,7 +287,7 @@ public class AnimacionGel : MonoBehaviour
         estabaEnSuelo = enSuelo;
 
         // ---------- Dormir y despertar ----------
-        bool activo = velocidad > 0.05f || !enSuelo || ctrl.SaltoEsteFrame;
+        bool activo = velocidad > 0.05f || !enSuelo || saltoAhora || mirandoCamara;
         if (activo)
         {
             if (Durmiendo) Despertar();
@@ -284,6 +297,29 @@ public class AnimacionGel : MonoBehaviour
         float objetivoSueno = Mathf.InverseLerp(segundosParaAdormecerse, segundosParaDormir, quieto);
         sueno = activo ? Suavizar(sueno, 0f, 12f, dt) : Suavizar(sueno, objetivoSueno, 1.5f, dt);
         sorpresa = Mathf.Max(0f, sorpresa - dt * 1.6f);
+
+        // ---------- Personalización: mirar a la cámara y saltar de alegría ----------
+        if (mirandoCamara)
+        {
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                Vector3 haciaCamara = cam.transform.position - transform.position;
+                haciaCamara.y = 0f;
+                if (haciaCamara.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.Slerp(transform.rotation,
+                        Quaternion.LookRotation(haciaCamara), 1f - Mathf.Exp(-6f * dt));
+            }
+        }
+        alegria += dt;
+        elevacion = 0f;
+        if (alegria < duracionAlegria)
+        {
+            float u = Mathf.Clamp01(alegria / (duracionAlegria * 0.65f));      // sube y baja en el 65% del tiempo
+            elevacion = Mathf.Sin(u * Mathf.PI) * alturaSaltoAlegria;
+            if (u >= 1f && !aterrizoAlegria) { Rebotar(aplastamientoAlCaer * 0.8f); aterrizoAlegria = true; }
+        }
+        pesoAlegria = Suavizar(pesoAlegria, alegria < duracionAlegria * 0.8f ? 1f : 0f, 14f, dt);
 
         // ---------- Valores de la animación ----------
         tiempo += dt * Mathf.Lerp(ciclosReposo, 0.35f, sueno);
@@ -342,7 +378,8 @@ public class AnimacionGel : MonoBehaviour
             Vector3 subir = new Vector3(m.lado * (xCabeza - ladoX), hombroY + manosArribaAlSaltar * 0.45f, 0f);
             float agita = Mathf.Sin(tiempoReal * 18f + m.lado * 1.5f) * 0.05f;
             Vector3 caer = new Vector3(m.lado * (xCabeza + 0.08f - ladoX), hombroY + 0.12f + agita, 0f);
-            Vector3 off = poseSuelo * suelo + subir * pesoSubida + caer * pesoCaida;
+            float manosArriba = Mathf.Max(pesoSubida, pesoAlegria);
+            Vector3 off = poseSuelo * suelo + subir * manosArriba + caer * pesoCaida;
 
             // Dormir: junta las manitos delante de la barriga (bien tierno)
             float alturaManitos = (cuerpo != null ? cuerpo.basePos.y - 0.04f : 0.72f) - m.basePos.y;
@@ -360,7 +397,7 @@ public class AnimacionGel : MonoBehaviour
                              * Quaternion.AngleAxis(agita * 200f, Vector3.forward);
             Quaternion objetivo = Quaternion.Slerp(Quaternion.identity, gCaminar, pesoMov * (1f - pesoCorrer));
             objetivo = Quaternion.Slerp(objetivo, gNinja, pesoMov * pesoCorrer * suelo);
-            objetivo = Quaternion.Slerp(objetivo, gSubir, pesoSubida);
+            objetivo = Quaternion.Slerp(objetivo, gSubir, manosArriba);
             objetivo = Quaternion.Slerp(objetivo, gCaer, pesoCaida);
             // Dormida: las manitos se inclinan hacia adentro y se tocan de las puntas
             Quaternion gDormir = Quaternion.FromToRotation(eje, new Vector3(-m.lado * 0.45f, -1f, 0.2f).normalized);
@@ -383,6 +420,58 @@ public class AnimacionGel : MonoBehaviour
 
         AnimarOjos(dt, reposo);
         AnimarBurbujas(dt);
+    }
+
+    // ---------- API para la personalización (la usa PanelColoresHUD) ----------
+    public void MirarACamara(bool activar)
+    {
+        mirandoCamara = activar;
+        if (activar) quieto = 0f;
+    }
+
+    public void SaltoDeAlegria()
+    {
+        alegria = 0f;
+        aterrizoAlegria = false;
+        Rebotar(-0.15f);
+    }
+
+    void OnEnable() { ColorPersonaje.AlCambiarColor += AlCambiarColor; }
+    void OnDisable() { ColorPersonaje.AlCambiarColor -= AlCambiarColor; }
+    void AlCambiarColor(int indice) { SaltoDeAlegria(); }
+
+    // Ojos "><": cada ojo se duplica dos veces, más delgado, y las copias se giran
+    // para formar ">" y "<". Se muestran solo durante el salto de alegría.
+    void CrearOjosFelices()
+    {
+        var lista = new System.Collections.Generic.List<Transform>();
+        foreach (var o in ojos)
+        {
+            Vector3 eje = Vector3.zero; eje[o.ejeVertical] = 1f;
+            Vector3 ejeMundo = o.t.TransformDirection(eje).normalized;
+            var r = o.t.GetComponent<Renderer>();
+            float alto = r != null ? r.bounds.size.y : 0.1f;
+            Vector3 centro = o.t.position;
+            // +X del jugador se ve a la izquierda de quien lo mira: ahí va ">", y "<" en el otro ojo
+            float ladoVista = Mathf.Sign(transform.InverseTransformPoint(centro).x);
+            Vector3 punta = centro - transform.right * (ladoVista * 0.3f * alto);
+            Vector3 normal = cabeza != null ? (punta - cabeza.t.position).normalized : transform.forward;
+            float ang = 32f * Mathf.Deg2Rad, largo = 0.3f * alto;
+            for (int k = -1; k <= 1; k += 2)
+            {
+                Vector3 trazo = (transform.right * (ladoVista * Mathf.Cos(ang)) + transform.up * (k * Mathf.Sin(ang))).normalized;
+                var copia = Instantiate(o.t.gameObject, o.t.parent);
+                copia.name = o.t.name + (k < 0 ? "_FelizAbajo" : "_FelizArriba");
+                copia.transform.position = punta + trazo * largo + normal * 0.006f;
+                copia.transform.rotation = Quaternion.FromToRotation(ejeMundo, trazo) * o.t.rotation;
+                Vector3 escala = o.escala * 0.55f;
+                escala[o.ejeVertical] = o.escala[o.ejeVertical] * 0.62f;
+                copia.transform.localScale = escala;
+                copia.SetActive(false);
+                lista.Add(copia.transform);
+            }
+        }
+        ojosFelices = lista.ToArray();
     }
 
     void Despertar()
@@ -425,8 +514,15 @@ public class AnimacionGel : MonoBehaviour
         if (reposo < 0.9f || sueno > 0.1f) objetivoMirada = 0f;
         mirada = Suavizar(mirada, objetivoMirada, 8f, dt);
 
+        bool primeraPersona = camara != null && camara.PrimeraPersona;
+        bool feliz = pesoAlegria > 0.5f && !primeraPersona;
+        foreach (var f in ojosFelices)
+            if (f.gameObject.activeSelf != feliz) f.gameObject.SetActive(feliz);
+
         foreach (var o in ojos)
         {
+            var rOjo = o.t.GetComponent<Renderer>();
+            if (rOjo != null && !primeraPersona) rOjo.enabled = !feliz;
             Vector3 e = o.escala * grandes;
             e[o.ejeVertical] = o.escala[o.ejeVertical] * abrir * grandes;
             o.t.localScale = e;
@@ -489,7 +585,7 @@ public class AnimacionGel : MonoBehaviour
         if (p == null) return;
         p.actual = Vector3.SmoothDamp(p.actual, offset, ref p.vel, p.retraso, Mathf.Infinity, dt);
         Vector3 local = Vector3.Scale(p.basePos + p.actual, aplastar);
-        p.t.position = transform.TransformPoint(local);
+        p.t.position = transform.TransformPoint(local + Vector3.up * elevacion);
         p.t.rotation = transform.rotation * giro * p.baseRot;
     }
 

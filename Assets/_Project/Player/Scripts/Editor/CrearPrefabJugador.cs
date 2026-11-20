@@ -3,7 +3,7 @@
 //   > Crear prefab del jugador          -> Player/Prefabs/Player_Gel.prefab
 //   > Crear escena de prueba del jugador -> Player/Pruebas/Test_Jugador.unity
 // Estructura del prefab:
-//   Player_Gel            (raíz: CharacterController + ControladorJugador + AnimacionGel + CamaraJugador)
+//   Player_Gel            (raíz: CharacterController + ControladorJugador + AnimacionGel + ColorPersonaje + CamaraJugador)
 //   ├── Personaje_Gel     (modelo de gel con sus ojos)
 //   └── Anillo_Luz        (aro cian en el suelo)
 using System.IO;
@@ -49,6 +49,21 @@ public static class CrearPrefabJugador
             var personaje = (GameObject)PrefabUtility.InstantiatePrefab(modelo, raiz.transform);
             personaje.transform.localPosition = Vector3.zero;
 
+            // El modelo debe mirar hacia adelante (+Z). Los ojos están en la cara:
+            // si quedan detrás del centro de la cabeza, el modelo está al revés y se gira 180°.
+            Transform cabezaModelo = null, ojoModelo = null;
+            foreach (Transform t in personaje.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Cabeza") cabezaModelo = t;
+                if (t.name == "Ojo_L") ojoModelo = t;
+            }
+            if (cabezaModelo != null && ojoModelo != null &&
+                raiz.transform.InverseTransformPoint(ojoModelo.position).z < raiz.transform.InverseTransformPoint(cabezaModelo.position).z)
+            {
+                personaje.transform.localRotation = Quaternion.Euler(0f, 180f, 0f) * personaje.transform.localRotation;
+                Debug.Log("El modelo miraba hacia atrás: se giró 180° para que mire hacia adelante.");
+            }
+
             var aro = (GameObject)PrefabUtility.InstantiatePrefab(anillo, raiz.transform);
             aro.transform.localPosition = Vector3.zero;
 
@@ -63,6 +78,11 @@ public static class CrearPrefabJugador
             anim.texturaNube = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaNube);
             anim.texturaLetraZ = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaLetraZ);
             anim.texturaExclamacion = AssetDatabase.LoadAssetAtPath<Texture2D>(RutaTexturaExclamacion);
+            raiz.AddComponent<ColorPersonaje>();   // HU-02: usa el color elegido
+            // HUD con el botón orbe y el panel de colores: se crea solo en cualquier escena
+            var hud = AssetDatabase.LoadAssetAtPath<GameObject>(CrearHUDJugador.RutaPrefab);
+            if (hud == null) hud = CrearHUDJugador.Crear();
+            raiz.AddComponent<CargarHUD>().prefabHUD = hud;
             var camara = raiz.AddComponent<CamaraJugador>();
             foreach (Transform t in personaje.GetComponentsInChildren<Transform>(true))
                 if (t.name == "Cabeza") { camara.cabeza = t; break; }
@@ -91,7 +111,7 @@ public static class CrearPrefabJugador
 
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaPrefab);
         var animPrefab = prefab != null ? prefab.GetComponent<AnimacionGel>() : null;
-        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null || animPrefab == null || animPrefab.texturaNube == null || animPrefab.texturaLetraZ == null)
+        if (prefab == null || prefab.GetComponent<ControladorJugador>() == null || prefab.GetComponent<ColorPersonaje>() == null || prefab.GetComponent<CargarHUD>() == null || animPrefab == null || animPrefab.texturaNube == null || animPrefab.texturaLetraZ == null)
             prefab = CrearPrefab();   // crea o actualiza el prefab con los scripts de HU-04
         if (prefab == null) return;
 

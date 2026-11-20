@@ -25,19 +25,23 @@ git clone https://github.com/valu420/glossy-horizons.git
 3. Open it with Unity `6000.6.6f1`. The first launch takes a few minutes while Unity rebuilds the `Library` folder.
 
 ## Project Structure
-Assets/
-├── _Project/
-│ ├── Art/
-│ │ ├── Models/
-│ │ ├── Textures/
-│ │ ├── Materials/
-│ │ └── Animations/
-│ ├── Prefabs/
-│ ├── Scenes/
-│ ├── Scripts/
-│ ├── Audio/
-│ └── UI/
-└── ThirdParty/
+
+Each folder has a single owner, so nobody edits someone else's files.
+
+```
+Assets/_Project/
+├── Core/            ← A (shared scripts, hub, menus)     Scenes/Hub.unity
+├── Player/          ← B (models, glass material, player prefab)
+├── Zones/
+│   ├── Aqua/        ← B                                   Scenes/Zone_Aqua.unity
+│   ├── DarkAero/    ← C                                   Scenes/Zone_DarkAero.unity
+│   └── Evil/        ← A                                   Scenes/Zone_Evil.unity
+├── UI/              ← C (info panels, fonts)              Scenes/MainMenu.unity
+└── Shared/          ← everyone (announce before changing)
+```
+
+Each zone folder contains `Scenes/`, `Scripts/`, `Prefabs/`, `Materials/`, `Models/`, `Textures/` and `Audio/`.
+If you need something in a scene you don't own, make a prefab and hand it to the scene's owner.
 
 ## Team Workflow
 

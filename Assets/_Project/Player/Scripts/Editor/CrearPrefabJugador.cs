@@ -172,6 +172,41 @@ public static class CrearPrefabJugador
         }
     }
 
+    // Pone a Player_Gel en la escena abierta (Hub, zonas...), parado en el suelo frente a la cámara principal.
+    // Si la escena ya tiene un jugador, solo lo selecciona. Usa la Main Camera de la escena (no crea otra).
+    [MenuItem("Glossy Horizons/Agregar jugador a la escena abierta")]
+    static void AgregarJugadorAEscena()
+    {
+        var existente = Object.FindAnyObjectByType<ControladorJugador>();
+        if (existente != null)
+        {
+            Selection.activeObject = existente.gameObject;
+            EditorGUIUtility.PingObject(existente.gameObject);
+            Debug.Log("La escena ya tiene un jugador: " + existente.name);
+            return;
+        }
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(RutaPrefab);
+        if (prefab == null) prefab = CrearPrefab();
+        if (prefab == null) return;
+
+        // Punto de aparición: debajo de la cámara principal (o el origen), sobre el primer suelo que encuentre
+        var cam = Camera.main;
+        Vector3 desde = cam != null ? cam.transform.position : Vector3.up * 2f;
+        Vector3 frente = cam != null ? Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up) : Vector3.forward;
+        if (frente.sqrMagnitude < 0.01f) frente = Vector3.forward;
+        desde += frente.normalized * 2.5f;                                 // un poco delante de la cámara
+        Vector3 pos = new Vector3(desde.x, 0f, desde.z);
+        if (Physics.Raycast(desde + Vector3.up * 5f, Vector3.down, out var golpe, 100f, ~0, QueryTriggerInteraction.Ignore))
+            pos = golpe.point;
+
+        var jugador = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        jugador.transform.SetPositionAndRotation(pos + Vector3.up * 0.05f, Quaternion.LookRotation(frente.normalized));
+        Undo.RegisterCreatedObjectUndo(jugador, "Agregar jugador");
+        EditorSceneManager.MarkSceneDirty(jugador.scene);
+        Selection.activeObject = jugador;
+        Debug.Log("Jugador agregado en " + pos + ". Guarda la escena (Ctrl+S) para conservarlo.");
+    }
+
     [MenuItem("Glossy Horizons/Crear escena de prueba del jugador")]
     static void CrearEscenaPrueba()
     {

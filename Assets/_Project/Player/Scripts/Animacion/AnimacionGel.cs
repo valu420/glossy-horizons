@@ -1,6 +1,6 @@
 // HU-05: animaciones del personaje de gel, hechas por código.
-// Va en la raíz del prefab Player_Gel (junto a ControladorJugador) y lee de él
-// la velocidad, si corre, si está en el suelo, si saltó y la velocidad vertical.
+// Va en la raíz del prefab Player_Gel y de los habitantes (HU-38). Lee de IMovimientoGel (ControladorJugador
+// o HabitanteGel) la velocidad, si corre, si está en el suelo, si saltó y la velocidad vertical.
 //
 //   Reposo   -> las piezas flotan con desfase y el cuerpo "respira"
 //   Caminar  -> pies alternados, manos en arcos grandes, leve rebote e inclinación
@@ -19,7 +19,6 @@
 using UnityEngine;
 
 [DefaultExecutionOrder(100)]   // después del movimiento y antes de la cámara
-[RequireComponent(typeof(ControladorJugador))]
 public partial class AnimacionGel : MonoBehaviour
 {
     [Header("Reposo")]
@@ -95,7 +94,7 @@ public partial class AnimacionGel : MonoBehaviour
     // Posición (x, y) y alto de cada Z, en píxeles de la imagen de la nube (512 x 512)
     static readonly Vector3[] LetrasZ = { new Vector3(190, 280, 190), new Vector3(300, 235, 140), new Vector3(385, 188, 100) };
 
-    ControladorJugador ctrl;
+    IMovimientoGel ctrl;   // ControladorJugador (jugador) o HabitanteGel (NPC)
     CamaraJugador camara;
     Transform modelo;
     Vector3 escalaModelo;
@@ -119,7 +118,7 @@ public partial class AnimacionGel : MonoBehaviour
 
     void Awake()
     {
-        ctrl = GetComponent<ControladorJugador>();
+        ctrl = GetComponent<IMovimientoGel>();
         camara = GetComponent<CamaraJugador>();
         cabeza = Crear("Cabeza", 0.09f);
         cuerpo = Crear("Cuerpo", 0.05f);
@@ -265,7 +264,7 @@ public partial class AnimacionGel : MonoBehaviour
         if (dt <= 0f) return;
 
         // ---------- Leer el movimiento ----------
-        bool controlActivo = ctrl.enabled;
+        bool controlActivo = ctrl != null && ctrl.Activo;
         float velocidad = controlActivo ? ctrl.VelocidadHorizontal.magnitude : 0f;
         bool enSuelo = !controlActivo || ctrl.EnSuelo;
         bool saltoAhora = controlActivo && ctrl.SaltoEsteFrame;

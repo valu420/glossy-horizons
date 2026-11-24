@@ -42,7 +42,7 @@ public class PanelEmotesHUD : MonoBehaviour
         if (teclado == null) return;
         if (teclado[tecla].wasPressedThisFrame)
         {
-            var anim = FindAnyObjectByType<AnimacionGel>();
+            var anim = AnimacionJugador();
             if (anim != null && anim.EnCharco) { anim.SalirDeCharco(); return; }   // G vuelve a la normalidad
             Alternar();
             return;
@@ -51,6 +51,13 @@ public class PanelEmotesHUD : MonoBehaviour
         if (teclado.escapeKey.wasPressedThisFrame) { Cerrar(); return; }
         for (int i = 0; i < Numeros.Length; i++)
             if (teclado[Numeros[i]].wasPressedThisFrame || teclado[Teclado[i]].wasPressedThisFrame) { Elegir(i); return; }
+    }
+
+    // la animación del JUGADOR (no la de un habitante de la isla, que también tiene AnimacionGel)
+    static AnimacionGel AnimacionJugador()
+    {
+        var jugador = FindAnyObjectByType<ControladorJugador>();
+        return jugador != null ? jugador.GetComponent<AnimacionGel>() : null;
     }
 
     public void Alternar()
@@ -73,7 +80,7 @@ public class PanelEmotesHUD : MonoBehaviour
 
     public void Elegir(int indice)
     {
-        var anim = FindAnyObjectByType<AnimacionGel>();
+        var anim = AnimacionJugador();
         if (anim != null && anim.HacerEmote(indice)) Cerrar();
         else if (avisoNoSePuede != null) avisoNoSePuede.Mostrar();
     }

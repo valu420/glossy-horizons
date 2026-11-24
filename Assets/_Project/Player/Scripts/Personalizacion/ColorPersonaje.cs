@@ -56,6 +56,10 @@ public class ColorPersonaje : MonoBehaviour
         AlCambiarColor?.Invoke(indice);
     }
 
+    [Tooltip("Jugador: usa y sigue el color elegido en el panel. Habitantes de la isla (HU-38): desactivado, usan colorPropio.")]
+    public bool sigueAlJugador = true;
+    public int colorPropio;                 // índice de la Paleta cuando no sigue al jugador
+
     Material instancia;
 
     void Awake()
@@ -68,10 +72,10 @@ public class ColorPersonaje : MonoBehaviour
             if (instancia == null) instancia = new Material(m) { name = m.name + " (color)" };
             r.sharedMaterial = instancia;
         }
-        Aplicar(ColorActual);
+        Aplicar(sigueAlJugador ? ColorActual : colorPropio);
     }
 
-    void OnEnable() { AlCambiarColor += Aplicar; }
+    void OnEnable() { if (sigueAlJugador) AlCambiarColor += Aplicar; }
     void OnDisable() { AlCambiarColor -= Aplicar; }
     void OnDestroy() { if (instancia != null) Destroy(instancia); }
 

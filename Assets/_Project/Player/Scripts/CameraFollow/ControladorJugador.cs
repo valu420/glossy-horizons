@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterController))]
-public class ControladorJugador : MonoBehaviour
+public class ControladorJugador : MonoBehaviour, IMovimientoGel
 {
     [Header("Movimiento")]
     public float velocidadCaminar = 3f;
@@ -27,6 +27,8 @@ public class ControladorJugador : MonoBehaviour
     // Datos que pueden leer otros scripts (por ejemplo, las animaciones de HU-05)
     public Vector3 VelocidadHorizontal { get; private set; }
     public bool EnSuelo => cc != null && cc.isGrounded;
+    public bool Activo => enabled;                         // IMovimientoGel
+    public float VelocidadCharco => velocidadCharco;       // IMovimientoGel
     public bool Corriendo { get; private set; }
     public bool SaltoEsteFrame { get; private set; }
     public float VelocidadVertical => velocidadVertical;   // > 0 subiendo, < 0 cayendo

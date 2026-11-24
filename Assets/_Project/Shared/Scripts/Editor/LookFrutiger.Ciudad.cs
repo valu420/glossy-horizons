@@ -80,8 +80,11 @@ public static partial class LookFrutiger
             int g = Globos(escena);
             EditorUtility.DisplayProgressBar("Glossy Horizons", "Dirigible...", 0.95f);
             int dg = Dirigible(escena);
+            int im = PantallasKioscos(escena);
+            EditorUtility.DisplayProgressBar("Glossy Horizons", "Habitantes de la isla...", 0.97f);
+            int hb = Habitantes(escena);
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(escena);
-            Debug.Log($"Hub generado: cielo, {n} edificios, {a} árboles en la isla, {au} auroras, {g} globos y {dg} dirigible.");
+            Debug.Log($"Hub generado: cielo, {n} edificios, {a} árboles en la isla, {au} auroras, {g} globos, {dg} dirigible, {im} imágenes en los kioscos y {hb} habitantes.");
         }
         finally { EditorUtility.ClearProgressBar(); }
     }

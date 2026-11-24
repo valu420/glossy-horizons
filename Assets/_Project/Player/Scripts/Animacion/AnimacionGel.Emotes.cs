@@ -51,7 +51,7 @@ public partial class AnimacionGel
     {
         if (indice < 0 || indice >= NombresEmotes.Length) return false;
         if (EnCharco) return false;                                         // en charco solo se sale con G
-        if (!ctrl.enabled || !ctrl.EnSuelo || ctrl.VelocidadHorizontal.magnitude > 0.15f) return false;
+        if (ctrl == null || !ctrl.Activo || !ctrl.EnSuelo || ctrl.VelocidadHorizontal.magnitude > 0.15f) return false;
         if (indice == 8) { EntrarCharco(); return true; }                   // Gelatina: se queda derretido
         emote = emoteMostrado = indice;
         tEmote = 0f;

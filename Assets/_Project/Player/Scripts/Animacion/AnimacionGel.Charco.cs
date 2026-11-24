@@ -164,7 +164,7 @@ public partial class AnimacionGel
                 if (r != null && !r.name.Contains("Anillo")) r.enabled = !ocultar;
             if (!ocultar) Rebotar(-0.3f);                      // al volver, rebote de gelatina
         }
-        ctrl.ModoCharco = enCharco || progresoCharco > 0.3f;    // lento, sin correr ni saltar
+        if (ctrl != null) ctrl.ModoCharco = enCharco || progresoCharco > 0.3f;    // lento, sin correr ni saltar
 
         // Tamaño de la gota: crece con un pequeño rebote al derretirse
         float s = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1f, progresoCharco));
@@ -177,7 +177,7 @@ public partial class AnimacionGel
         if (rCuerpo != null) rendCharco.sharedMaterial = rCuerpo.sharedMaterial;   // mismo gel (y mismo color)
 
         // Resorte de gelatina: se excita al arrancar y al frenar
-        float mov = Mathf.Clamp01(velocidad / Mathf.Max(0.01f, ctrl.velocidadCharco));
+        float mov = Mathf.Clamp01(velocidad / Mathf.Max(0.01f, (ctrl != null ? ctrl.VelocidadCharco : 1.5f)));
         velBambole += (movAnterior - mov) * 3f;
         movAnterior = mov;
         velBambole += (-140f * bambole - 7f * velBambole) * dt;

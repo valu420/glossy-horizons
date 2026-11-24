@@ -6,6 +6,7 @@
 //   - Anillo_Luz desactivado: el aro cian del suelo es lo que distingue al jugador.
 //   - ColorPersonaje con color propio (no sigue el color que elige el jugador).
 //   - HabitanteGel (su "cerebro") + cápsula de colisión: el jugador choca con él y no lo puede empujar.
+//   - NavMeshAgent apagado (HU-39): HabitanteGel lo enciende al empezar, sobre la malla de NavegacionIsla.
 //   - No se duerme estando quieto (eso queda para el jugador).
 using UnityEditor;
 using UnityEngine;
@@ -43,7 +44,15 @@ public static class CrearPrefabHabitante
             var anim = go.GetComponent<AnimacionGel>();
             if (anim != null) { anim.segundosParaAdormecerse = 1e6f; anim.segundosParaDormir = 1e6f; }
 
-            if (go.GetComponent<HabitanteGel>() == null) go.AddComponent<HabitanteGel>();
+            if (go.GetComponent<HabitanteGel>() == null) go.AddComponent<HabitanteGel>();   // agrega también el NavMeshAgent
+            // HU-39: agente de navegación. Apagado: HabitanteGel lo enciende cuando la malla ya está cargada.
+            var agente = go.GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (agente == null) agente = go.AddComponent<UnityEngine.AI.NavMeshAgent>();
+            agente.radius = 0.35f; agente.height = 1.6f; agente.baseOffset = 0f;
+            agente.speed = 1.8f; agente.acceleration = 6f; agente.angularSpeed = 300f;
+            agente.stoppingDistance = 0.5f; agente.autoBraking = true;
+            agente.obstacleAvoidanceType = UnityEngine.AI.ObstacleAvoidanceType.MedQualityObstacleAvoidance;
+            agente.enabled = false;
             var capsula = go.GetComponent<CapsuleCollider>();
             if (capsula == null) capsula = go.AddComponent<CapsuleCollider>();
             capsula.height = 1.6f; capsula.radius = 0.3f; capsula.center = new Vector3(0f, 0.8f, 0f);

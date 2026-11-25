@@ -359,7 +359,7 @@ namespace GlossyHorizons.Core.EditorTools
                 if (picked.Count % 2 == 0)
                 {
                     float s = 1.2f + (float)rng.NextDouble() * 1.6f;
-                    var rock = Prim(PrimitiveType.Sphere, "Roca", deco, new Vector3(q2.x, s * 0.2f, q2.y), new Vector3(s * 1.3f, s * 0.8f, s), mRockDeco, null, false);
+                    var rock = Prim(PrimitiveType.Sphere, "Roca", deco, new Vector3(q2.x, s * 0.2f, q2.y), new Vector3(s * 1.3f, s * 0.8f, s), mRockDeco, null, true);
                     rock.transform.localRotation = Quaternion.Euler(0f, (float)rng.NextDouble() * 360f, 0f);
                 }
                 else

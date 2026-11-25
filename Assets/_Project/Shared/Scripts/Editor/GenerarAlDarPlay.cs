@@ -4,7 +4,8 @@ using UnityEditor.SceneManagement;
 /// <summary>
 /// Cada vez que se da Play con el Hub abierto, justo antes de entrar al juego se vuelve a generar todo
 /// el fondo: cielo, ciudad, árboles de la isla y auroras (LookFrutiger.GenerarTodo).
-/// Se apaga/enciende en: Glossy Horizons > Hub > Generar todo al dar Play.
+/// APAGADO por defecto: el Hub ya se guarda completo dentro de Hub.unity, así que Play no regenera nada.
+/// Se enciende (por si se quiere regenerar el fondo al dar Play) en: Glossy Horizons > Hub > Generar todo al dar Play.
 /// </summary>
 [InitializeOnLoad]
 public static class GenerarAlDarPlay
@@ -17,7 +18,7 @@ public static class GenerarAlDarPlay
     {
         EditorApplication.playModeStateChanged += estado =>
         {
-            if (estado != PlayModeStateChange.ExitingEditMode || !EditorPrefs.GetBool(Clave, true)) return;
+            if (estado != PlayModeStateChange.ExitingEditMode || !EditorPrefs.GetBool(Clave, false)) return;
             var escena = EditorSceneManager.GetActiveScene();
             if (!escena.IsValid() || !escena.isLoaded || escena.path != RutaHub) return;
             LookFrutiger.GenerarTodo(escena);
@@ -25,12 +26,12 @@ public static class GenerarAlDarPlay
     }
 
     [MenuItem(Menu_)]
-    static void Alternar() => EditorPrefs.SetBool(Clave, !EditorPrefs.GetBool(Clave, true));
+    static void Alternar() => EditorPrefs.SetBool(Clave, !EditorPrefs.GetBool(Clave, false));
 
     [MenuItem(Menu_, true)]
     static bool AlternarValidar()
     {
-        Menu.SetChecked(Menu_, EditorPrefs.GetBool(Clave, true));
+        Menu.SetChecked(Menu_, EditorPrefs.GetBool(Clave, false));
         return true;
     }
 }

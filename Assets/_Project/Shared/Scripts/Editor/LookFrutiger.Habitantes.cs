@@ -17,8 +17,8 @@ using UnityEngine.AI;
 public static partial class LookFrutiger
 {
     const string RaizHabitantes = "Habitantes_Isla";
-    const int CantidadHabitantes = 24;          // HU-38: entre 20 y 30
-    const float SeparacionHabitantes = 6f;      // metros mínimos entre dos habitantes
+    const int CantidadHabitantes = 50;          // HU-38: la isla se siente habitada
+    const float SeparacionHabitantes = 4.5f;    // metros mínimos entre dos habitantes
     const float RadioVecinosColor = 16f;        // dentro de este radio no se repite color
     const string RutaNavMesh = "Assets/_Project/Shared/Navegacion/NavMesh_Hub.asset";
 

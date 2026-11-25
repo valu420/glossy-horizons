@@ -461,7 +461,8 @@ public partial class AnimacionGel : MonoBehaviour
 
     void OnEnable() { ColorPersonaje.AlCambiarColor += AlCambiarColor; }
     void OnDisable() { ColorPersonaje.AlCambiarColor -= AlCambiarColor; }
-    void AlCambiarColor(int indice) { SaltoDeAlegria(); }
+    // solo el jugador salta al elegir su color (los habitantes de la isla también tienen AnimacionGel)
+    void AlCambiarColor(int indice) { if (ctrl is ControladorJugador) SaltoDeAlegria(); }
 
     // Ojos "><": cada ojo se duplica dos veces, más delgado, y las copias se giran
     // para formar ">" y "<". Se muestran solo durante el salto de alegría.

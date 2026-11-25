@@ -65,6 +65,9 @@ public partial class AnimacionGel
 
     public void CancelarEmote() { emote = -1; }
 
+    /// Segundos que dura el emote (0..8); los habitantes la usan para quedarse quietos mientras reaccionan.
+    public static float Duracion(int indice) => indice >= 0 && indice < DuracionEmote.Length ? DuracionEmote[indice] : 2f;
+
     // Se llama en Update después de leer el movimiento
     void ActualizarEmote(float dt, float velocidad, bool enSuelo, bool saltoAhora)
     {

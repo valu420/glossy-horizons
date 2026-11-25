@@ -26,6 +26,7 @@ public class ControladorJugador : MonoBehaviour, IMovimientoGel
 
     // Datos que pueden leer otros scripts (por ejemplo, las animaciones de HU-05)
     public Vector3 VelocidadHorizontal { get; private set; }
+    public Vector3 VelocidadDeseada { get; private set; }   // la que pide el control, aunque algo lo frene (HU-40: empujar habitantes)
     public bool EnSuelo => cc != null && cc.isGrounded;
     public bool Activo => enabled;                         // IMovimientoGel
     public float VelocidadCharco => velocidadCharco;       // IMovimientoGel
@@ -82,6 +83,7 @@ public class ControladorJugador : MonoBehaviour, IMovimientoGel
         Corriendo = moviendose && correr.IsPressed() && !ModoCharco;
         float rapidez = ModoCharco ? velocidadCharco : (Corriendo ? velocidadCorrer : velocidadCaminar);
         Vector3 horizontal = direccion * rapidez;
+        VelocidadDeseada = horizontal;
 
         // Salto y gravedad
         SaltoEsteFrame = false;

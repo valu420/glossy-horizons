@@ -1,19 +1,19 @@
 // HU-38 / HU-39: habitante de gel de la isla (NPC). Va en la raíz del prefab Habitante_Gel, que es una variante
 // de Player_Gel sin controles, sin cámara, sin HUD y sin el anillo de luz (eso distingue al jugador).
 //   - Le da a AnimacionGel su "movimiento" (IMovimientoGel), así se anima igual que el jugador.
-//   - Máquina de estados (HU-39, CA4). Por ahora funcionan Pasear y Detenido; los demás estados quedan listos
-//     para las siguientes historias (Saludar HU-40, UsarObjeto HU-41, Conversar HU-42, DeLaMano HU-43,
-//     Perseguir HU-44).
+//   - Máquina de estados (HU-39, CA4): Pasear, Detenido y Reaccionar (HU-40, ver HabitanteGel.Reacciones.cs).
+//     Quedan listos para las siguientes historias: UsarObjeto HU-41, Conversar HU-42, DeLaMano HU-43, Perseguir HU-44.
 //       Pasear   -> camina (a veces corre) con NavMeshAgent hasta un punto de interés, prefiriendo los caminos.
 //       Detenido -> se queda unos segundos mirando alrededor y vuelve a pasear.
+//       Reaccionar -> hace un emote en respuesta al jugador (saludar, bailar, enojarse, marearse...).
 //   - Rendimiento (HU-38, CA5): si está lejos de la cámara apaga su animación (sigue caminando).
 using UnityEngine;
 using UnityEngine.AI;
 
-public enum EstadoHabitante { Pasear, Detenido, Saludar, Conversar, UsarObjeto, DeLaMano, Perseguir }
+public enum EstadoHabitante { Pasear, Detenido, Reaccionar, Conversar, UsarObjeto, DeLaMano, Perseguir }
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class HabitanteGel : MonoBehaviour, IMovimientoGel
+public partial class HabitanteGel : MonoBehaviour, IMovimientoGel
 {
     [Header("Estado (solo lectura en Play)")]
     [SerializeField] EstadoHabitante estado = EstadoHabitante.Detenido;
@@ -54,6 +54,7 @@ public class HabitanteGel : MonoBehaviour, IMovimientoGel
         animacion = GetComponent<AnimacionGel>();
         miVelocidad = Random.Range(velocidadCaminar.x, velocidadCaminar.y);
         siguienteRevision = Time.time + Random.Range(0f, 0.5f);
+        IniciarReacciones();
     }
 
     void Start()
@@ -74,11 +75,13 @@ public class HabitanteGel : MonoBehaviour, IMovimientoGel
     {
         float t = Time.time;
         RevisarAnimacion(t);
+        ActualizarReacciones(t);          // HU-40
 
         switch (estado)
         {
             case EstadoHabitante.Pasear: ActualizarPaseo(t); break;
             case EstadoHabitante.Detenido: ActualizarDetenido(t); break;
+            case EstadoHabitante.Reaccionar: ActualizarReaccion(t); break;
             default: ActualizarDetenido(t); break;     // estados de las próximas HU: por ahora, quieto
         }
 

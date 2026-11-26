@@ -91,6 +91,11 @@ public static partial class LookFrutiger
         var t = rm.bounds.size;
         float esc = Mathf.Max(Mathf.Max(b.size.x, b.size.z) / Mathf.Max(0.01f, Mathf.Max(t.x, t.z)), b.size.y / Mathf.Max(0.01f, t.y) * 0.85f);
         go.transform.localScale = Vector3.one * Mathf.Clamp(esc * holgura, 0.05f, 20f);
+        // Las rocas llevan collider convexo con su propia forma (no el de la esfera original), para no flotar sobre ellas
+        if (modelo.name.StartsWith("Roca"))
+            foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+                if (mf.sharedMesh != null && !mf.TryGetComponent<Collider>(out _))
+                { var c = mf.gameObject.AddComponent<MeshCollider>(); c.sharedMesh = mf.sharedMesh; c.convex = true; }
     }
 
     // ---------- agua animada (fuente y piscina) ----------

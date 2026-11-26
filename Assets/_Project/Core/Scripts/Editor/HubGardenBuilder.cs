@@ -322,7 +322,7 @@ namespace GlossyHorizons.Core.EditorTools
             {
                 float z = Rf(-7f, 7f), h = Rf(0.5f, 7.5f), x = Rf(-1.6f, 1.2f);
                 float sz = Rf(2.2f, 4.2f);
-                Prim(PrimitiveType.Sphere, $"Roca_{i}", w, new Vector3(x - 1.5f, h, z), new Vector3(sz, sz * Rf(0.8f, 1.3f), sz), mRock, null, i < 8);
+                Prim(PrimitiveType.Sphere, $"Roca_{i}", w, new Vector3(x - 1.5f, h, z), new Vector3(sz, sz * Rf(0.8f, 1.3f), sz), mRock, null, true);
             }
             // Lámina de agua que cae y pozo
             Prim(PrimitiveType.Cube, "Chorro", w, new Vector3(1.1f, 4.1f, 0f), new Vector3(0.4f, 7.2f, 3.6f), water, null, false);
